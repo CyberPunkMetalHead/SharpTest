@@ -5,13 +5,12 @@ namespace Sharptest
     public class Exchange
     {
         private readonly IExchangeAPI _exchangeAPI;
-        public Exchange()
-        {
 
+        public Exchange(string key, string secret)
+        {
             // Initialize the Exchange API within the constructor
             _exchangeAPI = ExchangeAPI.GetExchangeAPIAsync(ExchangeName.Coinbase).Result;
-            _exchangeAPI.LoadAPIKeys(@"path\to\Keys.bin");
-
+            _exchangeAPI.LoadAPIKeysUnsecure(key, secret);
         }
 
         public async Task<IEnumerable<ExchangeMarket>> GetExchangeInfo()
@@ -19,14 +18,28 @@ namespace Sharptest
             return await _exchangeAPI.GetMarketSymbolsMetadataAsync();
         }
 
-        public async Task<ExchangeOrderResult> Buy(ExchangeOrderRequest order)
+        public async Task<ExchangeOrderResult?> Buy(ExchangeOrderRequest order)
         {
-            return await _exchangeAPI.PlaceOrderAsync(order);
+            ExchangeOrderResult? resp = null;
+            try
+            {
+                resp = await _exchangeAPI.PlaceOrderAsync(order);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return resp;
         }
 
         public async Task<ExchangeDepositDetails> GetDepositDetails(string coin)
         {
             return await _exchangeAPI.GetDepositAddressAsync(coin);
+        }
+
+        public string NormalizeMarketSymbol(string marketSymbol)
+        {
+            return _exchangeAPI.NormalizeMarketSymbol(marketSymbol);
         }
     }
 }
