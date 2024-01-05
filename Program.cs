@@ -1,36 +1,30 @@
 ﻿using ExchangeSharp;
 using Sharptest;
+using NLog;
 
+var logger = LogManager.GetCurrentClassLogger();
 
-var exchange = new Exchange();
-var marketSymbols = exchange.GetExchangeInfo().Result;
-var depositDetails = await exchange.GetDepositDetails("Ethereum");
+// TODO put in you key/secret
+var exchange = new Exchange("KEY_HERE", "SECRET_HERE");
 
-Console.WriteLine(depositDetails);
+ExchangeOrderRequest buyOrder =
+    new()
+    {
+        MarketSymbol = exchange.NormalizeMarketSymbol("ada-usdt"),
+        Amount = 1m,
+        StopPrice = 0.0m,
+        IsBuy = true,
+        IsMargin = false,
+        ShouldRoundAmount = true,
+        OrderType = OrderType.Market,
+    };
 
-foreach (var symbol in marketSymbols)
-{
-    Console.WriteLine($"Symbol: {symbol.MarketSymbol}, PriceStepSize: {symbol.PriceStepSize}, QuantityStepSize: {symbol.QuantityStepSize}");
-}
+var result = await exchange.Buy(buyOrder);
 
-ExchangeOrderRequest buyOrder = new()
-{
-    MarketSymbol = "SOLUSDT",
-    Amount = 0.1m,        
-    Price = null,        
-    StopPrice = 0.0m, 
-    IsBuy = true,     
-    IsMargin = false,
-    OrderId = null,
-    ClientOrderId = null,
-    ShouldRoundAmount = true,
-    OrderType = OrderType.Market, 
-    IsPostOnly = null,
-};
+logger.Info("Waiting 5 seconds for order to complete...");
 
-Console.WriteLine(await exchange.GetExchangeInfo());
+await Task.Delay(3000);
 
-await exchange.Buy(buyOrder);
+logger.Warn($"Order Result: {result}");
 
-await Task.Delay(5000);
-
+logger.Error("Done!");
